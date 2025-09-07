@@ -8,6 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json"
 
 CMD ["python3"]
