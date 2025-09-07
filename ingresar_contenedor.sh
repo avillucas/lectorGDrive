@@ -1,10 +1,9 @@
 #!/bin/bash
-# Ejecuta el script para generar fuente_agente.json usando Docker
+# Abre un contenedor interactivo para ejecutar comandos manualmente
 
 docker run -it \
   -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
   -v $(pwd)/credentials.json:/app/credentials.json \
   -v $(pwd):/app \
   -w /app \
-  lector_gdrive \
-  python -u genera_fuente_agente.py
+  lector_gdrive

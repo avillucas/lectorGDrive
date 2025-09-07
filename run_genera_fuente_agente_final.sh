@@ -7,4 +7,4 @@ docker run -it \
   -v $(pwd):/app \
   -w /app \
   lector_gdrive \
-  python -u genera_fuente_agente.py
+  python -u genera_fuente_agente_final.py
