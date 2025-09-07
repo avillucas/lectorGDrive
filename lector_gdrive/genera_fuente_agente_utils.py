@@ -19,7 +19,7 @@ def get_all_files(service, folder_id, parent_path="", cache_file=None):
             q=f"'{folder_id}' in parents and trashed = false",
             fields="nextPageToken, files(id, name, mimeType)",
             pageToken=page_token,
-            pageSize=1000
+                pageSize=1000
         ).execute()
         for f in results.get('files', []):
             if f['mimeType'] == 'application/vnd.google-apps.folder':

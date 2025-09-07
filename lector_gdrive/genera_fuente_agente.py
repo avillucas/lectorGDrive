@@ -1,6 +1,10 @@
 import os
+import sys
 import json
-from lector_gdrive import GDriveReader
+
+# Permitir importar desde el directorio principal si se ejecuta desde shell/
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from lector_gdrive.gdrive_reader import GDriveReader
 
 def get_all_files(service, folder_id, parent_path="", cache_file=None):
     """

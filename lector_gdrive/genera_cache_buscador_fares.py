@@ -1,6 +1,11 @@
+
 import os
+import sys
 import json
-from lector_gdrive import GDriveReader
+
+# Permitir importar desde el directorio principal si se ejecuta desde shell/
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from lector_gdrive.gdrive_reader import GDriveReader
 from genera_fuente_agente_utils import get_all_files
 
 if __name__ == "__main__":
