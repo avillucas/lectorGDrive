@@ -1,0 +1,18 @@
+# .gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+credentials.json
+*.log
+.cache/
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store

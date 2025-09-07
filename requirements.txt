@@ -1,0 +1,5 @@
+# requirements.txt para lector_gdrive
+
+google-api-python-client
+google-auth
+google-auth-oauthlib
