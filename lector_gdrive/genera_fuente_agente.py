@@ -26,22 +26,23 @@ def generar_fuente_agente(cache_dir, output_dir):
         # Usar el path como directorio y el nombre sin extensión
         path = bf.get("path", "").lower()
         nombre = quitar_extension(bf["name"].lower())
+        
+        # Siempre indexar por nombre para búsqueda flexible
+        if nombre not in buscador_dict:
+            buscador_dict[nombre] = []
+        buscador_dict[nombre].append(bf)
+        print(f"Indexando en BUSCADOR por nombre: {nombre}")
+        
+        # Si hay path, crear índices adicionales por directorio
         if path:
-            # Crear múltiples claves para buscar en diferentes niveles de directorio
             paths = path.split('/')
             for i in range(len(paths)):
                 subpath = '/'.join(paths[0:i+1])
                 key = f"{subpath}/{nombre}"
                 if key not in buscador_dict:
                     buscador_dict[key] = []
-                print(f"Indexando en BUSCADOR: {key}")
+                print(f"Indexando en BUSCADOR por ruta: {key}")
                 buscador_dict[key].append(bf)
-            
-            # También indexar solo por nombre para búsqueda flexible
-            key = nombre
-            if key not in buscador_dict:
-                buscador_dict[key] = []
-            buscador_dict[key].append(bf)
 
     resultado = []
     for tf in textuales_files:
@@ -51,35 +52,25 @@ def generar_fuente_agente(cache_dir, output_dir):
         print(f"\nArchivo TEXTUALES: {tf['name']}")
         print(f"Directorio extraído: {directorio}")
         print(f"Nombre sin extensión: {nombre_archivo}")
-        # Construir la clave de búsqueda usando el directorio del nombre
-        # Intentar búsqueda por directorio/nombre
-        related_files = []
-        if directorio:
+        
+        # Buscar primero por nombre completo sin directorio
+        print(f"Buscando en BUSCADOR FARES por nombre: {nombre_archivo}")
+        related_files = buscador_dict.get(nombre_archivo, [])
+        
+        # Si no se encuentra y hay directorio, intentar con el path completo
+        if not related_files and directorio:
             clave_busqueda = f"{directorio}/{nombre_archivo}"
             print(f"Buscando en BUSCADOR FARES por directorio/nombre: {clave_busqueda}")
             related_files = buscador_dict.get(clave_busqueda, [])
         
-        # Si no se encuentra, buscar solo por nombre
-        if not related_files:
-            print(f"Buscando en BUSCADOR FARES por nombre: {nombre_archivo}")
-            related_files = buscador_dict.get(nombre_archivo, [])
-        
         fila = {"titulo": tf["name"]}
         if related_files:
-            fila["link"] = f"https://drive.google.com/file/d/{tf['id']}/view?usp=drive_link"
-            fila["archivos_relacionados"] = []
-            for rf in related_files:
-                ext = rf["name"].split(".")[-1].lower()
-                fila["archivos_relacionados"].append({
-                    "nombre": rf["name"],
-                    "tipo": ext,
-                    "link": f"https://drive.google.com/file/d/{rf['id']}/view?usp=drive_link"
-                })
-            tipos = [f"{rf['name']}" for rf in related_files]
-            print(f"  Relacionado con: {', '.join(tipos)} | {fila['link']}")
+            # Solo tomamos el primer archivo relacionado
+            rf = related_files[0]
+            fila["link"] = f"https://drive.google.com/file/d/{rf['id']}/view?usp=drive_link"
+            print(f"  Relacionado con: {rf['name']} | {fila['link']}")
         else:
-            print("  No se encontró archivo relacionado en BUSCADOR FARES. Deteniendo la ejecución...")
-            return None
+            print("  No se encontró archivo relacionado en BUSCADOR FARES para este archivo.")
         resultado.append(fila)
     output_path = os.path.join(output_dir, "fuente_agente.json")
     with open(output_path, "w", encoding="utf-8") as f:
