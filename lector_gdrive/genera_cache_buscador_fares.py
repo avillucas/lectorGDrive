@@ -1,4 +1,3 @@
-
 import os
 import sys
 import json
@@ -14,7 +13,8 @@ if __name__ == "__main__":
     creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
     reader = GDriveReader(creds_path)
     service = reader.service
-    buscador_fares_id = "1SjN3b2k05l82akwH24kPZOuuG82g-yk1"
+    buscador_fares_id = os.environ.get("BUSCADOR_FARES_DIR", "1SjN3b2k05l82akwH24kPZOuuG82g-yk1")
+    # BUSCADOR_FARES_DIR debe ser el ID de la carpeta en Google Drive
     print("[2/3] Obteniendo archivos de BUSCADOR FARES y generando cache...")
     files = get_all_files(service, buscador_fares_id, cache_file=os.path.join(cache_dir, "cache_buscador_fares.json"))
     print(f"[2/3] Archivos encontrados en BUSCADOR FARES: {len(files)}")

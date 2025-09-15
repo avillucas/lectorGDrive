@@ -1,4 +1,3 @@
-
 import os
 import sys
 import json
@@ -14,7 +13,8 @@ if __name__ == "__main__":
     creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
     reader = GDriveReader(creds_path)
     service = reader.service
-    textuales_id = "1DnWDELBR8RniMk8VWM0yV7r8eA4l8Ei3"
+    textuales_id = os.environ.get("TEXTUALES_DIR", "1DnWDELBR8RniMk8VWM0yV7r8eA4l8Ei3")
+    # TEXTUALES_DIR debe ser el ID de la carpeta en Google Drive
     print("[1/3] Obteniendo archivos de TEXTUALES y generando cache...")
     files = get_all_files(service, textuales_id, cache_file=os.path.join(cache_dir, "cache_textuales.json"))
     print(f"[1/3] Archivos encontrados en TEXTUALES: {len(files)}")
