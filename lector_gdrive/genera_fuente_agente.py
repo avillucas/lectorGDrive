@@ -63,7 +63,7 @@ def generar_fuente_agente(cache_dir, output_dir):
             print(f"Buscando en BUSCADOR FARES por directorio/nombre: {clave_busqueda}")
             related_files = buscador_dict.get(clave_busqueda, [])
         
-        fila = {"titulo": tf["name"]}
+        fila = {"file": tf["name"]}
         if related_files:
             # Solo tomamos el primer archivo relacionado
             rf = related_files[0]
