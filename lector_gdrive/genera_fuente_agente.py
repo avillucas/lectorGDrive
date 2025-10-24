@@ -21,9 +21,7 @@ def generar_fuente_agente(cache_dir, output_dir):
                 "id": item["id"],
                 "file": item["name"],
                 "link": f"https://drive.google.com/file/d/{item['id']}/view",
-                "title": item["name"].replace(".txt", ""),
-                "path": item.get("path", ""),
-                "source": "textuales"
+                "title": item["name"].replace(".txt", "")
             })
         print(f"Agregados {len(textuales_data)} elementos de textuales")
     
@@ -37,9 +35,7 @@ def generar_fuente_agente(cache_dir, output_dir):
                 "id": item["id"],
                 "file": item["name"],
                 "link": f"https://drive.google.com/file/d/{item['id']}/view",
-                "title": item["name"].replace(".txt", ""),
-                "path": item.get("path", ""),
-                "source": "buscador_fares"
+                "title": item["name"].replace(".txt", "")
             })
         print(f"Agregados {len(buscador_fares_data)} elementos de buscador fares")
     
