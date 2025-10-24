@@ -113,6 +113,11 @@ def verificar_correspondencia_textuales():
         print("⚠️  Hay objetos de textuales que no están en fuente_agente")
         return False
 
+def actualizar_titulos_desde_csvs(fuente_agente, titulos_dir="titulos"):
+    """Actualiza los títulos en fuente_agente usando archivos CSV del directorio titulos"""
+    from .actualiza_titulos_csv import actualizar_titulos_desde_csvs as actualizar
+    return actualizar(fuente_agente, titulos_dir)
+
 if __name__ == "__main__":
     import argparse
     
@@ -120,6 +125,8 @@ if __name__ == "__main__":
     parser.add_argument('--verificar', action='store_true', help='Solo verificar correspondencia sin generar')
     parser.add_argument('--cache_dir', default='cache', help='Directorio de cache')
     parser.add_argument('--output_dir', default='salida', help='Directorio de salida')
+    parser.add_argument('--actualizar_titulos', action='store_true', help='Actualizar títulos desde archivos CSV')
+    parser.add_argument('--titulos_dir', default='titulos', help='Directorio con archivos CSV de títulos')
     
     args = parser.parse_args()
     
@@ -127,6 +134,25 @@ if __name__ == "__main__":
         verificar_correspondencia_textuales()
     else:
         # Generar fuente_agente.json
-        generar_fuente_agente(args.cache_dir, args.output_dir)
+        fuente_agente = generar_fuente_agente(args.cache_dir, args.output_dir)
+        
+        # Actualizar títulos si se solicita
+        if args.actualizar_titulos:
+            print("\n🔄 Actualizando títulos desde archivos CSV...")
+            try:
+                from actualiza_titulos_csv import actualizar_titulos_desde_csvs
+                total_actualizados = actualizar_titulos_desde_csvs(fuente_agente, args.titulos_dir)
+                
+                if total_actualizados > 0:
+                    # Guardar archivo actualizado
+                    output_path = os.path.join(args.output_dir, "fuente_agente.json")
+                    with open(output_path, 'w', encoding='utf-8') as f:
+                        json.dump(fuente_agente, f, ensure_ascii=False, indent=2)
+                    print(f"✅ Títulos actualizados y guardados: {total_actualizados} cambios")
+            except ImportError:
+                print("⚠️  No se pudo importar el actualizador de títulos")
+            except Exception as e:
+                print(f"❌ Error actualizando títulos: {e}")
+        
         # Verificar correspondencia después de generar
         verificar_correspondencia_textuales()
