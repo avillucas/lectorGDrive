@@ -27,7 +27,7 @@ docker run -it \
 if [ -f "salida/salida.audios.json" ]; then
     echo ""
     echo "✅ Filtrado completado exitosamente"
-    echo "📄 Archivo generado: salida/salida.revistas.json"
+    echo "📄 Archivo generado: salida/salida.audios.json"
     
     # Mostrar información del archivo generado si jq está disponible
     if command -v jq &> /dev/null; then
