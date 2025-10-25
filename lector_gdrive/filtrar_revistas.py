@@ -23,25 +23,84 @@ def cargar_titulos_csv(csv_path):
     """Carga los títulos desde el archivo CSV"""
     titulos = []
     if not os.path.exists(csv_path):
+        print(f"❌ No se encuentra el archivo CSV: {csv_path}")
         return titulos
     
     try:
         with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            # Saltar header si existe
-            next(reader, None)
+            content = f.read().strip()
+            if not content:
+                print(f"❌ El archivo CSV está vacío: {csv_path}")
+                return titulos
             
-            for row in reader:
+            # Resetear el archivo para leerlo con csv.reader
+            f.seek(0)
+            reader = csv.reader(f)
+            
+            print(f"🔍 Analizando archivo CSV: {csv_path}")
+            
+            # Leer todas las filas para debug
+            all_rows = list(reader)
+            print(f"📊 Total de filas en CSV: {len(all_rows)}")
+            
+            if not all_rows:
+                print("❌ No hay filas en el CSV")
+                return titulos
+            
+            # Mostrar las primeras filas para debug
+            print("🔍 Primeras 3 filas del CSV:")
+            for i, row in enumerate(all_rows[:3]):
+                print(f"  Fila {i}: {row}")
+            
+            # Intentar diferentes estrategias de lectura
+            for i, row in enumerate(all_rows):
+                if not row:  # Saltar filas vacías
+                    continue
+                    
+                # Estrategia 1: Si hay al menos 2 columnas, usar la segunda como título
                 if len(row) >= 2:
                     categoria = row[0].strip().lower()
                     titulo = row[1].strip()
                     
-                    # Solo procesar filas que contengan 'revista' en la primera columna
-                    if categoria == 'revista':
+                    # Buscar diferentes variaciones de "revista"
+                    categorias_validas = ['revista', 'revistas', 'articulo', 'articulos', 'artículo', 'artículos']
+                    
+                    if any(cat in categoria for cat in categorias_validas) and titulo:
                         titulos.append(titulo)
+                        print(f"✅ Título añadido: '{titulo}' (categoría: '{categoria}')")
+                
+                # Estrategia 2: Si solo hay una columna, usar como título directamente
+                elif len(row) == 1 and row[0].strip():
+                    titulo = row[0].strip()
+                    # Verificar que no sea un header
+                    if not titulo.lower().startswith(('categoria', 'tipo', 'title', 'titulo')):
+                        titulos.append(titulo)
+                        print(f"✅ Título añadido (columna única): '{titulo}'")
+            
+            print(f"📋 Total títulos cargados: {len(titulos)}")
+            
+            # Si no encontró títulos con las estrategias anteriores, intentar leer todo como títulos
+            if not titulos and all_rows:
+                print("⚠️  Intentando estrategia alternativa: leer todas las filas como títulos")
+                for i, row in enumerate(all_rows):
+                    if row and len(row) > 0:
+                        # Tomar el último elemento no vacío de la fila
+                        for col in reversed(row):
+                            if col.strip():
+                                titulo = col.strip()
+                                if titulo and not titulo.lower().startswith(('categoria', 'tipo', 'title', 'titulo')):
+                                    titulos.append(titulo)
+                                    print(f"✅ Título añadido (alternativo): '{titulo}'")
+                                break
                         
+                        # Solo tomar los primeros 20 para evitar spam
+                        if len(titulos) >= 20:
+                            break
+                            
     except Exception as e:
-        print(f"⚠️  Error leyendo {csv_path}: {e}")
+        print(f"❌ Error leyendo {csv_path}: {e}")
+        import traceback
+        traceback.print_exc()
     
     return titulos
 
@@ -125,6 +184,7 @@ def generar_revistas_corregidas():
     archivo_salida = 'salida/salida.revistas.json'
     
     print("\n📄 Generando artículos en revistas corregidos...")
+    print(f"📄 Archivo CSV: {archivo_csv}")
     
     # Verificar que existe el archivo de entrada
     if not os.path.exists(archivo_entrada):
@@ -138,6 +198,8 @@ def generar_revistas_corregidas():
     except Exception as e:
         print(f"❌ Error cargando {archivo_entrada}: {e}")
         return False
+    
+    print(f"📊 Artículos en revistas a procesar: {len(revistas_originales)}")
     
     # Cargar títulos del CSV
     titulos_csv = cargar_titulos_csv(archivo_csv)
@@ -155,6 +217,11 @@ def generar_revistas_corregidas():
     
     print(f"📋 Se encontraron {len(titulos_csv)} títulos en el CSV")
     
+    # Mostrar algunos títulos del CSV para debug
+    print("🔍 Primeros 3 títulos del CSV:")
+    for i, titulo in enumerate(titulos_csv[:3]):
+        print(f"  {i+1}. {titulo[:80]}...")  # Limitar a 80 caracteres
+    
     # Procesar cada artículo en revista
     revistas_corregidas = []
     actualizados = 0
@@ -168,10 +235,15 @@ def generar_revistas_corregidas():
         # Crear copia del objeto original
         revista_corregida = dict(revista)
         
-        if titulo_corregido and similitud > 0.5:  # Umbral de similitud del 50%
+        if titulo_corregido and similitud > 0.3:  # Reducir umbral de similitud al 30%
             revista_corregida['title'] = titulo_corregido
             actualizados += 1
-            print(f"✅ Actualizado: '{limpiar_nombre_archivo(nombre_archivo)}' -> '{titulo_corregido}' (similitud: {similitud:.2f})")
+            print(f"✅ Actualizado: '{limpiar_nombre_archivo(nombre_archivo)[:50]}...' -> '{titulo_corregido[:50]}...' (similitud: {similitud:.2f})")
+        else:
+            if titulo_corregido:
+                print(f"⚠️  Similitud baja ({similitud:.2f}): '{limpiar_nombre_archivo(nombre_archivo)[:40]}...' vs '{titulo_corregido[:40]}...'")
+            else:
+                print(f"❌ No se encontró título similar para: '{limpiar_nombre_archivo(nombre_archivo)[:50]}...'")
         
         revistas_corregidas.append(revista_corregida)
     
