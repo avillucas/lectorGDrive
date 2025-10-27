@@ -11,33 +11,81 @@ def generar_fuente_agente(cache_dir, output_dir):
     
     fuente_agente = []
     
-    # Procesar cache textuales
+    # Cargar ambos caches
+    textuales_data = []
+    buscador_fares_data = []
+    
     if os.path.exists(cache_textuales_path):
         with open(cache_textuales_path, 'r', encoding='utf-8') as f:
             textuales_data = json.load(f)
-        
-        for item in textuales_data:
-            fuente_agente.append({
-                "id": item["id"],
-                "file": item["name"],
-                "link": f"https://drive.google.com/file/d/{item['id']}/view",
-                "title": item["name"].replace(".txt", "")
-            })
-        print(f"Agregados {len(textuales_data)} elementos de textuales")
+        print(f"Cargados {len(textuales_data)} elementos de cache_textuales.json")
     
-    # Procesar cache buscador fares
     if os.path.exists(cache_buscador_fares_path):
         with open(cache_buscador_fares_path, 'r', encoding='utf-8') as f:
             buscador_fares_data = json.load(f)
+        print(f"Cargados {len(buscador_fares_data)} elementos de cache_buscador_fares.json")
+    
+    # Crear índice de buscador fares por nombre base (sin extensión y prefijos)
+    def limpiar_nombre_para_matching(nombre):
+        """Limpia el nombre para hacer matching entre archivos txt y pdf"""
+        # Remover extensión
+        nombre_sin_ext = os.path.splitext(nombre)[0]
+        # Remover prefijos comunes
+        prefijos = ['articulos - ', 'contemplaciones - ', 'libros - ', 'videos - ', 'audios - ']
+        for prefijo in prefijos:
+            if nombre_sin_ext.startswith(prefijo):
+                nombre_sin_ext = nombre_sin_ext[len(prefijo):]
+                break
+        return nombre_sin_ext.lower().strip()
+    
+    # Crear índice de buscador fares
+    buscador_index = {}
+    for item in buscador_fares_data:
+        nombre_limpio = limpiar_nombre_para_matching(item["name"])
+        buscador_index[nombre_limpio] = item
+    
+    # Procesar archivos textuales y correlacionarlos con buscador fares
+    elementos_correlacionados = 0
+    elementos_sin_correlacion = 0
+    
+    for item in textuales_data:
+        nombre_textual_limpio = limpiar_nombre_para_matching(item["name"])
         
-        for item in buscador_fares_data:
-            fuente_agente.append({
-                "id": item["id"],
-                "file": item["name"],
-                "link": f"https://drive.google.com/file/d/{item['id']}/view",
-                "title": item["name"].replace(".txt", "")
-            })
-        print(f"Agregados {len(buscador_fares_data)} elementos de buscador fares")
+        # Buscar correlación en buscador fares
+        buscador_item = buscador_index.get(nombre_textual_limpio)
+        
+        if buscador_item:
+            # Correlación encontrada: usar ID de textual, link de buscador fares
+            link_original = f"https://drive.google.com/file/d/{buscador_item['id']}/view"
+            elementos_correlacionados += 1
+        else:
+            # Sin correlación: usar link genérico basado en ID de textual
+            link_original = f"https://drive.google.com/file/d/{item['id']}/view"
+            elementos_sin_correlacion += 1
+        
+        # Limpiar título (remover prefijos y extensión)
+        titulo_limpio = item["name"].replace(".txt", "")
+        prefijos_titulo = ['articulos - ', 'contemplaciones - ', 'libros - ', 'videos - ', 'audios - ']
+        for prefijo in prefijos_titulo:
+            if titulo_limpio.startswith(prefijo):
+                titulo_limpio = titulo_limpio[len(prefijo):]
+                break
+        
+        # Formatear título final
+        titulo_final = titulo_limpio.replace('_', ' ').replace('-', ' ')
+        # Capitalizar primera letra de cada palabra importante
+        titulo_final = ' '.join(word.capitalize() if len(word) > 2 else word 
+                               for word in titulo_final.split())
+        
+        fuente_agente.append({
+            "id": item["id"],  # ID del archivo textual
+            "file": item["name"],  # Nombre del archivo textual
+            "link": link_original,  # Link del archivo original (PDF) o genérico
+            "title": titulo_final  # Título formateado
+        })
+    
+    print(f"Correlaciones encontradas: {elementos_correlacionados}")
+    print(f"Sin correlación: {elementos_sin_correlacion}")
     
     # Guardar fuente_agente.json
     os.makedirs(output_dir, exist_ok=True)

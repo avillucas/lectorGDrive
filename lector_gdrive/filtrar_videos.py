@@ -64,56 +64,81 @@ def encontrar_titulo_mas_similar(nombre_archivo, titulos_csv):
 
 def filtrar_videos():
     """
-    Filtra objetos del archivo fuente_agente.json que tengan 'videos -' 
-    al inicio del atributo 'file' y los guarda en salida.videos.json
+    Filtra los videos del archivo fuente_agente.json
+    Busca objetos cuyo atributo 'file' inicie con 'videos -'
+    y los guarda en salida/salida.videos.json
     """
+    
     # Rutas de archivos
-    archivo_fuente = Path('salida/fuente_agente.json')
-    archivo_salida = Path('salida/salida.videos.json')
+    archivo_fuente = 'salida/fuente_agente.json'
+    archivo_salida = 'salida/salida.videos.json'
+    
+    print("🎥 Filtrando videos...")
+    print(f"📄 Archivo fuente: {archivo_fuente}")
+    print(f"💾 Archivo destino: {archivo_salida}")
+    
+    # Verificar que existe el archivo fuente
+    if not os.path.exists(archivo_fuente):
+        print(f"❌ No se encuentra el archivo fuente: {archivo_fuente}")
+        return False
     
     try:
-        # Verificar que existe el archivo fuente
-        if not archivo_fuente.exists():
-            print(f"Error: No se encuentra el archivo {archivo_fuente}")
-            return False
-            
-        # Leer el archivo fuente
+        # Cargar datos del archivo fuente
         with open(archivo_fuente, 'r', encoding='utf-8') as f:
-            datos_fuente = json.load(f)
+            datos = json.load(f)
         
-        # Filtrar objetos que comienzan con "videos -"
-        videos_filtrados = [
-            item for item in datos_fuente 
-            if item.get('file', '').startswith('videos -')
-        ]
+        print(f"📊 Total de objetos en fuente_agente.json: {len(datos)}")
+        
+        # Filtrar videos (objetos cuyo 'file' inicie con 'videos -')
+        videos = []
+        
+        for item in datos:
+            # Verificar que el objeto tenga el atributo 'file'
+            if 'file' in item:
+                file_name = item['file']
+                
+                # Buscar archivos que inicien con 'videos -'
+                if file_name.startswith('videos -'):
+                    videos.append(item)
+                    print(f"✅ Video encontrado: {file_name[:80]}...")
+        
+        print(f"\n📊 Resumen del filtrado:")
+        print(f"   📁 Total objetos procesados: {len(datos)}")
+        print(f"   🎥 Videos encontrados: {len(videos)}")
         
         # Crear directorio de salida si no existe
-        archivo_salida.parent.mkdir(parents=True, exist_ok=True)
+        Path(archivo_salida).parent.mkdir(parents=True, exist_ok=True)
         
-        # Escribir archivo de salida
+        # Guardar los videos filtrados
         with open(archivo_salida, 'w', encoding='utf-8') as f:
-            json.dump(videos_filtrados, f, ensure_ascii=False, indent=2)
+            json.dump(videos, f, ensure_ascii=False, indent=2)
         
-        # Mostrar estadísticas
-        print(f"✓ Proceso completado exitosamente")
-        print(f"📁 Archivo origen: {archivo_fuente}")
-        print(f"📁 Archivo destino: {archivo_salida}")
-        print(f"📊 Total objetos originales: {len(datos_fuente)}")
-        print(f"📊 Objetos filtrados (videos): {len(videos_filtrados)}")
+        print(f"\n✅ Filtrado completado exitosamente")
+        print(f"💾 Archivo guardado: {archivo_salida}")
         
-        # Mostrar algunos ejemplos
-        if videos_filtrados:
-            print(f"\n🎥 Primeros 3 videos encontrados:")
-            for i, video in enumerate(videos_filtrados[:3], 1):
-                print(f"  {i}. {video.get('title', 'Sin título')}")
+        # Mostrar algunos videos de ejemplo
+        if videos:
+            print(f"\n🎥 Ejemplos de videos extraídos:")
+            for i, video in enumerate(videos[:5], 1):
+                titulo = video.get('title', video.get('file', 'Sin título'))
+                print(f"  {i}. {titulo[:70]}...")
+            
+            if len(videos) > 5:
+                print(f"  ... y {len(videos) - 5} videos más")
+        
+        # Mostrar tamaño del archivo generado
+        if os.path.exists(archivo_salida):
+            file_size = os.path.getsize(archivo_salida)
+            file_size_kb = file_size / 1024
+            print(f"💾 Tamaño del archivo generado: {file_size_kb:.1f} KB")
         
         return True
         
     except json.JSONDecodeError as e:
-        print(f"Error: El archivo JSON no es válido: {e}")
+        print(f"❌ Error al leer el archivo JSON: {e}")
         return False
     except Exception as e:
-        print(f"Error inesperado: {e}")
+        print(f"❌ Error inesperado: {e}")
         return False
 
 def generar_videos_corregidos():
@@ -188,6 +213,18 @@ def generar_videos_corregidos():
     except Exception as e:
         print(f"❌ Error guardando el archivo: {e}")
         return False
+
+def main():
+    """Función principal"""
+    print("🔄 Iniciando filtrado de videos desde fuente_agente.json")
+    
+    exito = filtrar_videos()
+    
+    if exito:
+        print("\n🎉 Proceso completado exitosamente!")
+    else:
+        print("\n❌ El proceso falló")
+        exit(1)
 
 if __name__ == "__main__":
     import argparse
